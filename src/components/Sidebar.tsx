@@ -76,14 +76,14 @@ const menuConfig = [
   {
     name: "Support",
     icon: HelpCircle,
-    path: "/support",
-    marginClass: "mt-16", // Special margin applied here
+    path: "/dashboard/support",
+    marginClass: "mt-16",
     roles: ["employee", "it_staff", "admin"],
   },
   {
     name: "My Profile",
     icon: UserCircle,
-    path: "/profile",
+    path: "/dashboard/profile",
 
     roles: ["employee"],
   },

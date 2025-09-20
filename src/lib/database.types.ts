@@ -60,7 +60,9 @@ export type Database = {
           category_id: number | null
           content: string | null
           created_at: string | null
+          excerpt: string | null
           id: number
+          image_url: string | null
           slug: string
           title: string
           updated_at: string | null
@@ -69,7 +71,9 @@ export type Database = {
           category_id?: number | null
           content?: string | null
           created_at?: string | null
+          excerpt?: string | null
           id?: number
+          image_url?: string | null
           slug: string
           title: string
           updated_at?: string | null
@@ -78,7 +82,9 @@ export type Database = {
           category_id?: number | null
           content?: string | null
           created_at?: string | null
+          excerpt?: string | null
           id?: number
+          image_url?: string | null
           slug?: string
           title?: string
           updated_at?: string | null
@@ -117,20 +123,73 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: number
+          is_read: boolean
+          link_to: string | null
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          is_read?: boolean
+          link_to?: string | null
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          is_read?: boolean
+          link_to?: string | null
+          message?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          avatar_url: string | null
+          department: string | null
           full_name: string | null
           id: string
+          job_title: string | null
+          office_location: string | null
+          phone_number: string | null
+          receive_notifications: boolean | null
           role: string
         }
         Insert: {
+          avatar_url?: string | null
+          department?: string | null
           full_name?: string | null
           id: string
+          job_title?: string | null
+          office_location?: string | null
+          phone_number?: string | null
+          receive_notifications?: boolean | null
           role?: string
         }
         Update: {
+          avatar_url?: string | null
+          department?: string | null
           full_name?: string | null
           id?: string
+          job_title?: string | null
+          office_location?: string | null
+          phone_number?: string | null
+          receive_notifications?: boolean | null
           role?: string
         }
         Relationships: []
