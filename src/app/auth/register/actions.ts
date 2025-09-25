@@ -1,12 +1,10 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { headers } from "next/headers";
 
 export async function signup(
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
-  const origin = (await headers()).get("origin");
   const supabase = await createClient();
 
   const email = formData.get("email") as string;
@@ -23,7 +21,7 @@ export async function signup(
     email,
     password,
     options: {
-      emailRedirectTo: origin ? `${origin}/auth/callback` : undefined,
+      // The `emailRedirectTo` option has been removed.
       data: {
         full_name: fullName,
         role: role,
