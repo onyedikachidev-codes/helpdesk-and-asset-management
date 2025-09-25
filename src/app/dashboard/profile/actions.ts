@@ -11,7 +11,7 @@ export async function updateUserProfile(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    redirect("/login");
+    redirect("/auth/login");
   }
 
   const updatedProfile = {
@@ -43,7 +43,7 @@ export async function updateAvatarUrl(filePath: string) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    redirect("/login");
+    redirect("/auth/login");
   }
 
   const { error } = await supabase

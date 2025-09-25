@@ -12,7 +12,7 @@ export async function middleware(request: NextRequest) {
   // If the user is not logged in and they are trying to access a protected route...
   if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
     // ...redirect them to the login page.
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
   // If the user is logged in and they are trying to access an auth page (like login/signup)...

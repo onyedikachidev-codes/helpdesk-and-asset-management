@@ -42,7 +42,7 @@ export default function OpenTicketsList({ tickets }: OpenTicketsListProps) {
           {tickets.map((ticket) => (
             <li key={ticket.id} className="border-b pb-4 last:border-b-0">
               <Link
-                href={`/tickets/${ticket.id}`}
+                href={`/dashboard/tickets/`}
                 className="block hover:bg-gray-50 p-2 rounded-md"
               >
                 <div className="flex justify-between items-center">

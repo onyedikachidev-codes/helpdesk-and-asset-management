@@ -4,11 +4,16 @@ import type { Asset } from "@/app/dashboard/assets/page";
 import EmptyState from "@/components/ui/EmptyState";
 import AssetCard from "./AssetCard";
 
+// FIX 1: Update the component's props to accept `userRole`.
 type AssetsClientProps = {
   initialAssets: Asset[];
+  userRole: string | null;
 };
 
-export default function AssetsClient({ initialAssets }: AssetsClientProps) {
+export default function AssetsClient({
+  initialAssets,
+  userRole,
+}: AssetsClientProps) {
   return (
     <main className="p-6">
       <div className="flex items-center justify-between">
@@ -17,13 +22,12 @@ export default function AssetsClient({ initialAssets }: AssetsClientProps) {
 
       <div className="mt-6">
         {initialAssets.length === 0 ? (
-          // Use your EmptyState component when there are no assets
           <EmptyState title="No Assets Assigned" />
         ) : (
-          // Render a grid of asset cards if there is data
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {initialAssets.map((asset) => (
-              <AssetCard key={asset.id} asset={asset} />
+              // FIX 2: Pass the `userRole` prop down to each AssetCard.
+              <AssetCard key={asset.id} asset={asset} userRole={userRole} />
             ))}
           </div>
         )}

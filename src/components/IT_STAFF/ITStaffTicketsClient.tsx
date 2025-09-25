@@ -1,102 +1,91 @@
 "use client";
 
-import { useState, FormEvent, useTransition } from "react"; // 1. Import useTransition
+import { useState, FormEvent } from "react";
 import EmptyState from "@/components/ui/EmptyState";
 import Pagination from "@/components/Pagination";
 import ReusuableTable from "@/components/ReusableTable";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { baseClassName } from "@/constants/index";
 import StatusSpan from "@/components/ui/StatusSpan";
-import CreateTicketModal from "@/components/CreateTicketModal";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { Ticket } from "@/app/dashboard/tickets/page";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import SortDropdown from "./SortDropdown";
-import TicketDetailsModal from "./TicketsDetailsModal";
-import LoadingSpinner from "@/components/ui/Spinner";
 
-type TicketsClientProps = {
-  initialTickets: Ticket[];
+import ITStaffTicketDetailsModal from "./ITStaffTicketDetailsModal"; // The new, enhanced modal
+import { ITStaffTicket } from "@/app/dashboard/tickets/it-staff/page";
+import { Input } from "../ui/input";
+import SortDropdown from "../SortDropdown";
+import { Button } from "../ui/button";
+
+type ITStaffTicketsClientProps = {
+  initialTickets: ITStaffTicket[];
   totalTickets: number;
   currentPage: number;
   itemsPerPage: number;
 };
 
+// Updated table headers for the IT staff view
 const tableHeaders = [
   { title: "Ticket Id" },
   { title: "Title" },
-  { title: "Description" },
-  { title: "Created" },
-  { title: "Last Updated" },
+  { title: "Submitted By" },
   { title: "Status" },
+  { title: "Priority" },
+  { title: "Last Updated" },
 ];
 
-export default function TicketsClient({
+export default function ITStaffTicketsClient({
   initialTickets,
   totalTickets,
   currentPage,
   itemsPerPage,
-}: TicketsClientProps) {
+}: ITStaffTicketsClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentQuery = searchParams.get("q") || "";
 
-  // 3. Initialize the useTransition hook
-  const [isPending, startTransition] = useTransition();
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<ITStaffTicket | null>(
+    null
+  );
 
   const totalPages = Math.ceil(totalTickets / itemsPerPage);
 
-  // 4. Wrap all router.push calls in startTransition
-  const handlePageChange = (newPage: number) => {
+  // Helper function to update URL search params
+  const updateSearchParams = (paramsToUpdate: Record<string, string>) => {
     const params = new URLSearchParams(searchParams);
-    params.set("page", String(newPage));
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`);
+    Object.entries(paramsToUpdate).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
     });
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    updateSearchParams({ page: String(newPage) });
   };
 
   const handleEntriesChange = (newLimit: number) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("limit", String(newLimit));
-    params.set("page", "1");
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`);
-    });
+    updateSearchParams({ limit: String(newLimit), page: "1" });
   };
 
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const searchQuery = formData.get("q") as string;
-    const params = new URLSearchParams(searchParams);
-    params.set("q", searchQuery);
-    params.set("page", "1");
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`);
-    });
+    updateSearchParams({ q: searchQuery, page: "1" });
   };
 
-  if (isPending) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
   if (totalTickets === 0 && !currentQuery)
-    return <EmptyState title="No Tickets Found" />;
+    return <EmptyState title="No Tickets Assigned To You" />;
 
   return (
     <>
       <div className="flex items-center justify-between mx-6 pt-6">
-        <h2 className="text-lg font-semibold ">My Tickets</h2>{" "}
+        <h2 className="text-lg font-semibold ">My Assigned Tickets</h2>
         <div className="flex items-center gap-4">
           <SortDropdown />
-          <CreateTicketModal />{" "}
           <div className="p-4">
             <form
               onSubmit={handleSearchSubmit}
@@ -146,28 +135,32 @@ export default function TicketsClient({
               <TableCell className={`${baseClassName}`}>
                 TIX-00{ticket.id}
               </TableCell>
-              <TableCell className={`${baseClassName}`}>
-                {ticket.title}
-              </TableCell>
               <TableCell
                 className={`${baseClassName} max-w-[30ch] overflow-hidden text-ellipsis whitespace-nowrap`}
               >
-                {ticket.description}
+                {ticket.title}
               </TableCell>
               <TableCell className={`${baseClassName}`}>
-                {new Date(ticket.created_at).toLocaleDateString()}
-              </TableCell>
-              <TableCell className={`${baseClassName}`}>
-                {new Date(ticket.updated_at).toLocaleDateString()}
+                {ticket.created_by?.full_name || "N/A"}
               </TableCell>
               <TableCell className={`${baseClassName}`}>
                 <StatusSpan status={ticket.status}>{ticket.status}</StatusSpan>
+              </TableCell>
+              <TableCell className={`${baseClassName}`}>
+                <StatusSpan status={ticket.priority}>
+                  {ticket.priority}
+                </StatusSpan>
+              </TableCell>
+              <TableCell className={`${baseClassName}`}>
+                {new Date(ticket.updated_at).toLocaleString()}
               </TableCell>
             </TableRow>
           )}
         />
       </div>
-      <TicketDetailsModal
+
+      {/* Use the new, interactive modal for IT Staff */}
+      <ITStaffTicketDetailsModal
         ticket={selectedTicket}
         onClose={() => setSelectedTicket(null)}
       />

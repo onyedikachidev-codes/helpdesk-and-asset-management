@@ -31,13 +31,27 @@ const menuConfig = [
     name: "My Tickets",
     icon: Ticket,
     path: `/dashboard/tickets`,
-    roles: ["employee", "it_staff", "admin"], // Visible to everyone
+    roles: ["employee"], // Visible to everyone
+  },
+  {
+    name: "My Tickets",
+    icon: Ticket,
+    path: `/dashboard/tickets/it-staff`,
+    roles: ["it_staff"], // Visible to everyone
   },
   {
     name: "My Assets",
     icon: HardDrive,
     path: `/dashboard/assets`,
-    roles: ["employee"], // Visible to everyone
+    exact: true,
+    roles: ["employee", "it_staff"], // Visible to everyone
+  },
+  {
+    name: "Ticket Queue",
+    icon: Ticket,
+    path: "/dashboard/ticket-queue",
+
+    roles: ["it_staff", "admin"],
   },
   {
     name: "Knowledge Base",
@@ -46,17 +60,20 @@ const menuConfig = [
     roles: ["employee", "it_staff", "admin"], // Visible to everyone
   },
   // IT Staff & Admin Section
+
   {
-    name: "Ticket Queue",
-    icon: Ticket,
-    path: "/it/tickets",
-    marginClass: "mt-16", // Special margin applied here
-    roles: ["it_staff", "admin"],
+    name: "Support",
+    icon: HelpCircle,
+    path: "/dashboard/support",
+    marginClass: "mt-16",
+    roles: ["employee"],
   },
+
   {
     name: "Asset Management",
     icon: HardDrive,
-    path: "/it/assets",
+    path: "/dashboard/assets-management",
+    marginClass: "mt-16",
     roles: ["it_staff", "admin"],
   },
   // Admin Only Section
@@ -73,19 +90,13 @@ const menuConfig = [
     path: "/admin/settings",
     roles: ["admin"],
   },
-  {
-    name: "Support",
-    icon: HelpCircle,
-    path: "/dashboard/support",
-    marginClass: "mt-16",
-    roles: ["employee", "it_staff", "admin"],
-  },
+
   {
     name: "My Profile",
     icon: UserCircle,
     path: "/dashboard/profile",
 
-    roles: ["employee"],
+    roles: ["employee", "it_staff"],
   },
 ];
 

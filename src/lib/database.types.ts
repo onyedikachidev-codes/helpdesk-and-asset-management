@@ -14,41 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
-      assets: {
+      asset_history: {
         Row: {
-          asset_name: string
-          asset_tag: string
+          asset_id: number
           assigned_at: string | null
-          assigned_to: string | null
-          category: string | null
           id: number
-          serial_number: string | null
-          status: string
+          notes: string | null
+          unassigned_at: string | null
+          user_id: string
         }
         Insert: {
-          asset_name: string
-          asset_tag: string
+          asset_id: number
           assigned_at?: string | null
-          assigned_to?: string | null
-          category?: string | null
-          id?: never
-          serial_number?: string | null
-          status?: string
+          id?: number
+          notes?: string | null
+          unassigned_at?: string | null
+          user_id: string
         }
         Update: {
-          asset_name?: string
-          asset_tag?: string
+          asset_id?: number
           assigned_at?: string | null
-          assigned_to?: string | null
-          category?: string | null
-          id?: never
-          serial_number?: string | null
-          status?: string
+          id?: number
+          notes?: string | null
+          unassigned_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "assets_assigned_to_fkey"
-            columns: ["assigned_to"]
+            foreignKeyName: "asset_history_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assets: {
+        Row: {
+          asset_tag: string
+          asset_type: string
+          created_at: string | null
+          current_user_id: string | null
+          id: number
+          manufacturer: string | null
+          model: string | null
+          purchase_date: string | null
+          serial_number: string | null
+          updated_at: string | null
+          warranty_expiry_date: string | null
+        }
+        Insert: {
+          asset_tag: string
+          asset_type: string
+          created_at?: string | null
+          current_user_id?: string | null
+          id?: number
+          manufacturer?: string | null
+          model?: string | null
+          purchase_date?: string | null
+          serial_number?: string | null
+          updated_at?: string | null
+          warranty_expiry_date?: string | null
+        }
+        Update: {
+          asset_tag?: string
+          asset_type?: string
+          created_at?: string | null
+          current_user_id?: string | null
+          id?: number
+          manufacturer?: string | null
+          model?: string | null
+          purchase_date?: string | null
+          serial_number?: string | null
+          updated_at?: string | null
+          warranty_expiry_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assets_current_user_id_fkey"
+            columns: ["current_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -57,6 +108,7 @@ export type Database = {
       }
       kb_articles: {
         Row: {
+          author_id: string | null
           category_id: number | null
           content: string | null
           created_at: string | null
@@ -68,6 +120,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          author_id?: string | null
           category_id?: number | null
           content?: string | null
           created_at?: string | null
@@ -79,6 +132,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          author_id?: string | null
           category_id?: number | null
           content?: string | null
           created_at?: string | null
@@ -90,6 +144,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "kb_articles_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "kb_articles_category_id_fkey"
             columns: ["category_id"]
@@ -196,6 +257,7 @@ export type Database = {
       }
       tickets: {
         Row: {
+          assigned_to: string | null
           category: string | null
           created_at: string
           created_by: string
@@ -207,6 +269,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          assigned_to?: string | null
           category?: string | null
           created_at?: string
           created_by: string
@@ -218,6 +281,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          assigned_to?: string | null
           category?: string | null
           created_at?: string
           created_by?: string
@@ -229,6 +293,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "tickets_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tickets_created_by_fkey"
             columns: ["created_by"]
@@ -243,7 +314,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

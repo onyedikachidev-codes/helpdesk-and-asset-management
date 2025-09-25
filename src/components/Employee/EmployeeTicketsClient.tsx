@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent, useTransition } from "react"; // 1. Import useTransition
+import { useState, FormEvent } from "react";
 import EmptyState from "@/components/ui/EmptyState";
 import Pagination from "@/components/Pagination";
 import ReusuableTable from "@/components/ReusableTable";
@@ -10,11 +10,10 @@ import StatusSpan from "@/components/ui/StatusSpan";
 import CreateTicketModal from "@/components/CreateTicketModal";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Ticket } from "@/app/dashboard/tickets/page";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import SortDropdown from "./SortDropdown";
-import TicketDetailsModal from "./TicketsDetailsModal";
-import LoadingSpinner from "@/components/ui/Spinner";
+import { Input } from "../../components/ui/input";
+import { Button } from "../../components/ui/button";
+import TicketDetailsModal from "../TicketsDetailsModal";
+import SortDropdown from "../SortDropdown";
 
 type TicketsClientProps = {
   initialTickets: Ticket[];
@@ -32,7 +31,7 @@ const tableHeaders = [
   { title: "Status" },
 ];
 
-export default function TicketsClient({
+export default function EmployeeTicketsClient({
   initialTickets,
   totalTickets,
   currentPage,
@@ -43,49 +42,34 @@ export default function TicketsClient({
   const searchParams = useSearchParams();
   const currentQuery = searchParams.get("q") || "";
 
-  // 3. Initialize the useTransition hook
-  const [isPending, startTransition] = useTransition();
+  // State to manage the currently selected ticket for the modal
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 
   const totalPages = Math.ceil(totalTickets / itemsPerPage);
 
-  // 4. Wrap all router.push calls in startTransition
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("page", String(newPage));
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`);
-    });
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleEntriesChange = (newLimit: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("limit", String(newLimit));
     params.set("page", "1");
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`);
-    });
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const searchQuery = formData.get("q") as string;
+
     const params = new URLSearchParams(searchParams);
     params.set("q", searchQuery);
     params.set("page", "1");
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`);
-    });
+    router.push(`${pathname}?${params.toString()}`);
   };
-
-  if (isPending) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <LoadingSpinner />
-      </div>
-    );
-  }
 
   if (totalTickets === 0 && !currentQuery)
     return <EmptyState title="No Tickets Found" />;
@@ -141,7 +125,7 @@ export default function TicketsClient({
             <TableRow
               key={ticket.id}
               className="odd:bg-[#f8f8fc] cursor-pointer hover:bg-gray-100"
-              onClick={() => setSelectedTicket(ticket)}
+              onClick={() => setSelectedTicket(ticket)} // Make row clickable
             >
               <TableCell className={`${baseClassName}`}>
                 TIX-00{ticket.id}
@@ -167,6 +151,8 @@ export default function TicketsClient({
           )}
         />
       </div>
+
+      {/* The modal is rendered here, controlled by state */}
       <TicketDetailsModal
         ticket={selectedTicket}
         onClose={() => setSelectedTicket(null)}

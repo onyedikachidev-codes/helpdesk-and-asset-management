@@ -12,7 +12,7 @@ export async function createTicket(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return redirect("/login");
+    return redirect("/auth/login");
   }
 
   // 2. Get the form data

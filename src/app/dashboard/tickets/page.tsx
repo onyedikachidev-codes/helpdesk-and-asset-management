@@ -28,7 +28,7 @@ export default async function TicketsPage({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    redirect("/auth/login");
   }
 
   const currentPage = Number(searchParams?.page) || 1;

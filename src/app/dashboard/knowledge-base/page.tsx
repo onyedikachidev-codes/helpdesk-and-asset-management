@@ -1,35 +1,66 @@
 import { createClient } from "@/lib/supabase/server";
 import { Book, Laptop, AppWindow, Wifi } from "lucide-react";
 import Link from "next/link";
-import ArticleCard from "@/components/ArticleCard"; // 1. Import the new component
+import ArticleCard from "@/components/ArticleCard";
+import CreateArticleButton from "@/components/CreateArticleButton";
 
-// A map to render icons based on the name stored in the DB
 const iconMap: { [key: string]: React.ReactNode } = {
   Laptop: <Laptop className="h-8 w-8 text-purple-800" />,
   AppWindow: <AppWindow className="h-8 w-8 text-purple-800" />,
   Wifi: <Wifi className="h-8 w-8 text-purple-800" />,
 };
 
+type RecentArticle = {
+  title: string;
+  slug: string;
+  image_url: string | null;
+  excerpt: string | null;
+  category: {
+    slug: string;
+  } | null;
+};
+
 export default async function KnowledgeBasePage() {
   const supabase = await createClient();
 
-  // Fetch all categories
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let userRole: string | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    userRole = profile?.role ?? null;
+  }
+
   const { data: categories } = await supabase.from("kb_categories").select("*");
 
-  // 2. Updated the query to fetch image_url and excerpt, and limit to 3
   const { data: recentArticles } = await supabase
     .from("kb_articles")
     .select("title, slug, image_url, excerpt, category:kb_categories(slug)")
     .order("created_at", { ascending: false })
-    .limit(3);
+    .limit(3)
+    .returns<RecentArticle[]>();
 
   return (
     <main className="p-6">
-      <div className="text-center py-10 bg-gray-50 rounded-lg">
-        <h1 className="text-3xl font-bold">Knowledge Base</h1>
-        <p className="text-gray-600 mt-2">
-          Find answers and solutions to common problems.
-        </p>
+      <h1 className="text-2xl font-bold">Knowledge Base</h1>
+      <div className="flex items-center justify-between pt-2">
+        <div>
+          <h2 className="text-md text-gray-500 mt-1">
+            Find answers and solutions to common problems.
+          </h2>
+        </div>
+        <div className="flex items-center gap-4">
+          <CreateArticleButton
+            userRole={userRole}
+            categories={categories ?? []}
+          />
+        </div>
       </div>
 
       <section className="mt-10">
@@ -59,7 +90,6 @@ export default async function KnowledgeBasePage() {
 
       <section className="mt-10">
         <h2 className="text-xl font-semibold mb-4">Recent Articles</h2>
-        {/* 3. Replaced the old list with a grid of ArticleCard components */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {recentArticles?.map((article) => (
             <ArticleCard key={article.slug} article={article} />

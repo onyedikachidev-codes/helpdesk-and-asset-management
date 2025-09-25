@@ -3,8 +3,8 @@ import { HardDrive } from "lucide-react";
 import { updateUserProfile } from "./actions";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { notFound } from "next/navigation"; // 1. Import notFound
-import AvatarUpload from "@/components/AvatarUpload"; // 2. Import the new component
+import { notFound } from "next/navigation";
+import AvatarUpload from "@/components/AvatarUpload";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -14,21 +14,23 @@ export default async function ProfilePage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    redirect("/auth/login");
   }
 
+  // FIX 1: Correct the asset query.
+  // - The column for the user is `current_user_id`, not `assigned_to`.
+  // - The table has `manufacturer` and `model`, but not `asset_name`. We fetch those instead.
   const [profileRes, assetsRes] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase
       .from("assets")
-      .select("asset_name, asset_tag")
-      .eq("assigned_to", user.id),
+      .select("asset_tag, manufacturer, model")
+      .eq("current_user_id", user.id),
   ]);
 
   const { data: profile } = profileRes;
   const { data: assets } = assetsRes;
 
-  // 3. Add a check in case the profile hasn't been created yet
   if (!profile) {
     notFound();
   }
@@ -43,7 +45,6 @@ export default async function ProfilePage() {
           <div className="space-y-8">
             <div className="bg-white p-6 rounded-lg shadow-md border">
               <div className="flex flex-col items-center text-center">
-                {/* 4. Replaced the static User icon with the interactive AvatarUpload component */}
                 <AvatarUpload profile={profile} />
                 <h2 className="text-2xl font-bold mt-4">
                   {profile?.full_name ?? "Employee"}
@@ -147,14 +148,18 @@ export default async function ProfilePage() {
                       className="flex items-center text-sm text-gray-700"
                     >
                       <HardDrive className="w-4 h-4 mr-2 text-gray-500" />
+                      {/* FIX 2: Display the correct asset information */}
                       <span>
-                        {asset.asset_name} ({asset.asset_tag})
+                        {`${asset.manufacturer || ""} ${
+                          asset.model || ""
+                        }`.trim()}{" "}
+                        ({asset.asset_tag})
                       </span>
                     </li>
                   ))}
                   <li className="pt-2">
                     <Link
-                      href="/dashboard/assets"
+                      href="/dashboard/assets" // Corrected link
                       className="text-sm text-purple-800 hover:underline"
                     >
                       View all my assets...

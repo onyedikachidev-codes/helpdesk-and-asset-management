@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -9,33 +9,38 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const statuses = ["All", "Open", "In Progress", "Awaiting Reply", "Resolved"];
+const TICKET_STATUSES = ["All", "Open", "In Progress", "Resolved", "Closed"];
 
 export default function StatusFilter() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const currentStatus = searchParams.get("status") || "All";
 
   const handleStatusChange = (status: string) => {
+    // THE FIX: Initialize new params with the existing searchParams.
+    // This copies all current parameters (like 'sort' or 'q')
+    // into the new 'params' object, preserving them.
     const params = new URLSearchParams(searchParams);
+
     if (status === "All") {
       params.delete("status");
     } else {
       params.set("status", status);
     }
-    params.set("page", "1");
+    params.set("page", "1"); // Reset to first page when filter changes
 
-    router.push(`/dashboard/tickets?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   return (
     <div className="w-full md:w-[200px]">
       <Select onValueChange={handleStatusChange} value={currentStatus}>
-        <SelectTrigger>
+        <SelectTrigger className="bg-white">
           <SelectValue placeholder="Filter by status..." />
         </SelectTrigger>
         <SelectContent>
-          {statuses.map((status) => (
+          {TICKET_STATUSES.map((status) => (
             <SelectItem key={status} value={status}>
               {status}
             </SelectItem>

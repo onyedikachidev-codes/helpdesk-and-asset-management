@@ -1,30 +1,29 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
-export async function signup(formData: FormData) {
-  // We already know the client works from our test page.
+export async function signup(
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const origin = (await headers()).get("origin");
   const supabase = await createClient();
 
-  // Let's be very explicit with the form data.
-  const data = Object.fromEntries(formData.entries());
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const fullName = formData.get("fullName") as string;
 
-  const email = String(data.email);
-  const password = String(data.password);
-  const fullName = String(data.fullName);
-  const role = String(data.role);
+  const role = "employee";
 
-  // The rest of the logic is the same, but now we're using
-  // these clean variables.
-  if (!["employee", "it_staff"].includes(role)) {
-    return redirect("/signup?message=Invalid role selected");
+  if (!email || !password || !fullName) {
+    return { error: "Please fill in all required fields." };
   }
 
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
+      emailRedirectTo: origin ? `${origin}/auth/callback` : undefined,
       data: {
         full_name: fullName,
         role: role,
@@ -33,13 +32,9 @@ export async function signup(formData: FormData) {
   });
 
   if (error) {
-    // This is the error we've been seeing.
     console.error("Signup Error:", error.message);
-    return redirect("/signup?message=Could not create account");
+    return { error: error.message };
   }
 
-  // If signup succeeds, go to the login page.
-  return redirect(
-    "/auth/login?message=Account created successfully. Please log in."
-  );
+  return { success: true };
 }

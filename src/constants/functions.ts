@@ -1,15 +1,15 @@
 export const getStatusStyles = (status: string) => {
   switch (status?.toLowerCase()) {
-    case "active":
+    case "low":
       return "bg-green-200 text-green-600";
     case "resolved":
       return "bg-green-200 text-green-600";
     case "booked":
       return "bg-indigo-200 text-indigo-600";
-    case "terminated":
+    case "medium":
       return "bg-yellow-200 text-yellow-600";
-    case "pending":
-      return "bg-yellow-200 text-yellow-600";
+    case "high":
+      return "bg-red-200 text-red-600";
     case "open":
       return "bg-yellow-200 text-yellow-600";
     case "in progress":

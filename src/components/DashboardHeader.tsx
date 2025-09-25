@@ -10,7 +10,7 @@ export default async function DashboardHeader() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    redirect("/login");
+    redirect("/auth/login");
   }
 
   // Fetch profile and notification DETAILS in parallel
