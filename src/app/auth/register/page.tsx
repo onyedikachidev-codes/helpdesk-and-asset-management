@@ -1,46 +1,31 @@
 "use client";
 
-import AuthContainer from "@/components/AuthContainer";
-import Image from "next/image";
-import React, { useState } from "react";
-import { Eye, EyeOff } from "lucide-react"; // 1. Import icons
+import { useState, useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
+import Image from "next/image";
+import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
+import AuthContainer from "@/components/AuthContainer";
 import CPLogo from "../../../../public/images/cp_logo_colored.png";
 import { signup } from "./actions";
-import Link from "next/link";
+
+const initialState = { error: "", success: false };
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [state, formAction] = useActionState(signup, initialState);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setErrorMessage(null);
-
-    const formData = new FormData(event.currentTarget);
-    const password = formData.get("password") as string;
-    const confirmPassword = formData.get("confirmPassword") as string;
-
-    // Client-side validation for password match
-    if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match.");
-      return;
+  // This effect will run when the server action returns a response.
+  useEffect(() => {
+    if (state.success) {
+      // FIX: This is the corrected redirect logic.
+      // It uses the new, correct message and pushes the user to the login page.
+      const message = "Account created successfully. Please log in.";
+      router.push(`/auth/login?message=${encodeURIComponent(message)}`);
     }
-
-    const result = await signup(formData);
-
-    if (result.error) {
-      setErrorMessage(result.error);
-    } else if (result.success) {
-      // On success, redirect to login with a success message
-      router.push(
-        "/login?message=Account created! Please check your email to confirm and then log in."
-      );
-    }
-  };
+  }, [state.success, router]);
 
   return (
     <AuthContainer>
@@ -50,26 +35,25 @@ export default function RegisterPage() {
           alt="logo"
           width={100}
           height={100}
-          className="h-auto m-0 border-r border-white/25 pr-3.5 cursor-pointer"
+          className="h-auto"
         />
-
-        <div className="space-y-4">
+        <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-gray-800">
             Signup to Helpdesk
           </h1>
-
-          <p className="text-gray-600 text-lg">
-            Please Fill the form to create an account.
+          <p className="text-gray-600">
+            Please fill the form to create an account.
           </p>
         </div>
-        <form onSubmit={handleSubmit} className="w-full">
+
+        <form action={formAction} className="w-full">
           <div className="flex flex-col gap-4">
             <input
               name="fullName"
               type="text"
               placeholder="Full Name"
               className="p-3 border border-gray-300 rounded"
-              required // 2. All fields are now required
+              required
             />
             <input
               name="email"
@@ -78,7 +62,6 @@ export default function RegisterPage() {
               className="p-3 border border-gray-300 rounded"
               required
             />
-            {/* 3. Password input with visibility toggle */}
             <div className="relative w-full">
               <input
                 name="password"
@@ -95,7 +78,6 @@ export default function RegisterPage() {
                 {showPassword ? <EyeOff /> : <Eye />}
               </button>
             </div>
-            {/* 3. Confirm Password input with visibility toggle */}
             <div className="relative w-full">
               <input
                 name="confirmPassword"
@@ -113,10 +95,8 @@ export default function RegisterPage() {
               </button>
             </div>
 
-            {/* 4. The role dropdown has been removed */}
-
-            {errorMessage && (
-              <p className="text-red-500 text-center">{errorMessage}</p>
+            {state.error && (
+              <p className="text-red-500 text-center">{state.error}</p>
             )}
 
             <button

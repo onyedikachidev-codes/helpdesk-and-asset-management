@@ -2,9 +2,18 @@
 
 import { createClient } from "@/lib/supabase/server";
 
+// The shape of the state object passed between the client and server.
+type ActionState = {
+  error?: string;
+  success?: boolean;
+};
+
+// FIX: The function now accepts `prevState` as its first argument
+// to correctly match the signature expected by `useActionState`.
 export async function signup(
+  prevState: ActionState,
   formData: FormData
-): Promise<{ error?: string; success?: boolean }> {
+): Promise<ActionState> {
   const supabase = await createClient();
 
   const email = formData.get("email") as string;
@@ -21,7 +30,6 @@ export async function signup(
     email,
     password,
     options: {
-      // The `emailRedirectTo` option has been removed.
       data: {
         full_name: fullName,
         role: role,
