@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect, RefObject } from "react";
-import { Bell, CheckCheck } from "lucide-react";
+import { useState, useRef, useEffect, RefObject, useTransition } from "react";
+import { Bell, CheckCheck, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { markNotificationsAsRead } from "@/app/dashboard/notifications/actions";
 
-// --- THIS IS THE FIX ---
-// Allow the ref's type to be `HTMLDivElement | null` to match how `useRef` is initialized.
 function useOnClickOutside(
   ref: RefObject<HTMLDivElement | null>,
   handler: (event: MouseEvent | TouchEvent) => void
@@ -37,16 +36,31 @@ type Notification = {
 };
 
 type NotificationBellProps = {
-  notifications: Notification[];
-  unreadCount: number;
+  initialNotifications: Notification[];
+  initialUnreadCount: number;
 };
 
 export default function NotificationBell({
-  notifications,
-  unreadCount,
+  initialNotifications,
+  initialUnreadCount,
 }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  // FIX: Initialize state with a fallback to an empty array to prevent runtime errors.
+  const [notifications, setNotifications] = useState(
+    initialNotifications ?? []
+  );
+  const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
+
+  // This effect ensures the local state updates if the initial props change.
+  useEffect(() => {
+    // FIX: Add a fallback here as well for robustness.
+    setNotifications(initialNotifications ?? []);
+    setUnreadCount(initialUnreadCount);
+  }, [initialNotifications, initialUnreadCount]);
 
   useOnClickOutside(dropdownRef, () => setIsOpen(false));
 
@@ -54,7 +68,15 @@ export default function NotificationBell({
     setIsOpen(!isOpen);
     if (!isOpen && unreadCount > 0) {
       markNotificationsAsRead();
+      setUnreadCount(0);
+      setNotifications(notifications.map((n) => ({ ...n, is_read: true })));
     }
+  };
+
+  const handleRefresh = () => {
+    startTransition(() => {
+      router.refresh();
+    });
   };
 
   return (
@@ -70,11 +92,23 @@ export default function NotificationBell({
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border z-10">
-          <div className="p-4 border-b">
+          <div className="p-4 border-b flex justify-between items-center">
             <h3 className="font-semibold text-gray-800">Notifications</h3>
+            <button
+              onClick={handleRefresh}
+              disabled={isPending}
+              className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50"
+            >
+              <RefreshCw
+                className={`h-4 w-4 text-gray-500 ${
+                  isPending ? "animate-spin" : ""
+                }`}
+              />
+            </button>
           </div>
           <div className="py-2 max-h-96 overflow-y-auto">
-            {notifications.length > 0 ? (
+            {/* FIX: Add a check to ensure `notifications` is an array before accessing .length */}
+            {notifications && notifications.length > 0 ? (
               notifications.map((notif) => (
                 <Link
                   key={notif.id}
