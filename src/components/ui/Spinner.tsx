@@ -1,12 +1,12 @@
 "use client";
 
+// This component is now self-contained and will always appear centered on a
+// semi-transparent, blurred background overlay.
 export default function LoadingSpinner() {
   return (
-    // FIX: Add a full-screen, fixed-position wrapper to center the spinner by default.
-    // This container acts as an overlay for full-page loading states.
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+    // FIX: Changed `backdrop-blur-sm` to `backdrop-blur-[2px]` for a more subtle effect.
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
       <style>{`
-        /* The spinner's own styles remain unchanged, controlling only its internal appearance. */
         .spinner {
           width: 60px;
           height: 60px;

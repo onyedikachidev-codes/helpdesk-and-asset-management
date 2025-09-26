@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent, useTransition } from "react"; // 1. Import useTransition
+import { useState, FormEvent, useTransition } from "react";
 import EmptyState from "@/components/ui/EmptyState";
 import Pagination from "@/components/Pagination";
 import ReusuableTable from "@/components/ReusableTable";
@@ -42,29 +42,28 @@ export default function TicketsClient({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentQuery = searchParams.get("q") || "";
-
-  // 3. Initialize the useTransition hook
   const [isPending, startTransition] = useTransition();
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 
   const totalPages = Math.ceil(totalTickets / itemsPerPage);
 
-  // 4. Wrap all router.push calls in startTransition
-  const handlePageChange = (newPage: number) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("page", String(newPage));
+  const handleNavigation = (params: URLSearchParams) => {
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`);
     });
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("page", String(newPage));
+    handleNavigation(params);
   };
 
   const handleEntriesChange = (newLimit: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("limit", String(newLimit));
     params.set("page", "1");
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`);
-    });
+    handleNavigation(params);
   };
 
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -74,29 +73,20 @@ export default function TicketsClient({
     const params = new URLSearchParams(searchParams);
     params.set("q", searchQuery);
     params.set("page", "1");
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`);
-    });
+    handleNavigation(params);
   };
 
-  if (isPending) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (totalTickets === 0 && !currentQuery)
-    return <EmptyState title="No Tickets Found" />;
-
   return (
-    <>
+    // FIX: Use a relative container for the loading overlay
+    <div className="relative">
+      {isPending && <LoadingSpinner />}
+
+      {/* The header is now outside the conditional logic, so it always shows */}
       <div className="flex items-center justify-between mx-6 pt-6">
-        <h2 className="text-lg font-semibold ">My Tickets</h2>{" "}
+        <h2 className="text-lg font-semibold ">My Tickets</h2>
         <div className="flex items-center gap-4">
           <SortDropdown />
-          <CreateTicketModal />{" "}
+          <CreateTicketModal />
           <div className="p-4">
             <form
               onSubmit={handleSearchSubmit}
@@ -119,58 +109,67 @@ export default function TicketsClient({
         </div>
       </div>
 
+      {/* FIX: Conditional logic now only wraps the table/empty state */}
       <div className="mx-6 pt-4 pb-10 space-y-2">
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalEntries={totalTickets}
-          entriesPerPage={itemsPerPage}
-          onNext={() => handlePageChange(currentPage + 1)}
-          onPrev={() => handlePageChange(currentPage - 1)}
-          className="bg-white py-3.5 px-5"
-          onEntriesChange={handleEntriesChange}
-        />
-
-        <ReusuableTable
-          headers={tableHeaders}
-          data={initialTickets}
-          itemsPerPage={itemsPerPage}
-          currentPage={currentPage}
-          totalItems={totalTickets}
-          renderRow={(ticket) => (
-            <TableRow
-              key={ticket.id}
-              className="odd:bg-[#f8f8fc] cursor-pointer hover:bg-gray-100"
-              onClick={() => setSelectedTicket(ticket)}
-            >
-              <TableCell className={`${baseClassName}`}>
-                TIX-00{ticket.id}
-              </TableCell>
-              <TableCell className={`${baseClassName}`}>
-                {ticket.title}
-              </TableCell>
-              <TableCell
-                className={`${baseClassName} max-w-[30ch] overflow-hidden text-ellipsis whitespace-nowrap`}
-              >
-                {ticket.description}
-              </TableCell>
-              <TableCell className={`${baseClassName}`}>
-                {new Date(ticket.created_at).toLocaleDateString()}
-              </TableCell>
-              <TableCell className={`${baseClassName}`}>
-                {new Date(ticket.updated_at).toLocaleDateString()}
-              </TableCell>
-              <TableCell className={`${baseClassName}`}>
-                <StatusSpan status={ticket.status}>{ticket.status}</StatusSpan>
-              </TableCell>
-            </TableRow>
-          )}
-        />
+        {totalTickets > 0 ? (
+          <>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalEntries={totalTickets}
+              entriesPerPage={itemsPerPage}
+              onNext={() => handlePageChange(currentPage + 1)}
+              onPrev={() => handlePageChange(currentPage - 1)}
+              className="bg-white py-3.5 px-5"
+              onEntriesChange={handleEntriesChange}
+            />
+            <ReusuableTable
+              headers={tableHeaders}
+              data={initialTickets}
+              itemsPerPage={itemsPerPage}
+              currentPage={currentPage}
+              totalItems={totalTickets}
+              renderRow={(ticket) => (
+                <TableRow
+                  key={ticket.id}
+                  className="odd:bg-[#f8f8fc] cursor-pointer hover:bg-gray-100"
+                  onClick={() => setSelectedTicket(ticket)}
+                >
+                  <TableCell className={baseClassName}>
+                    TIX-00{ticket.id}
+                  </TableCell>
+                  <TableCell className={baseClassName}>
+                    {ticket.title}
+                  </TableCell>
+                  <TableCell
+                    className={`${baseClassName} max-w-[30ch] overflow-hidden text-ellipsis whitespace-nowrap`}
+                  >
+                    {ticket.description}
+                  </TableCell>
+                  <TableCell className={baseClassName}>
+                    {new Date(ticket.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className={baseClassName}>
+                    {new Date(ticket.updated_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className={baseClassName}>
+                    <StatusSpan status={ticket.status}>
+                      {ticket.status}
+                    </StatusSpan>
+                  </TableCell>
+                </TableRow>
+              )}
+            />
+          </>
+        ) : (
+          <EmptyState title="No Tickets Found" />
+        )}
       </div>
+
       <TicketDetailsModal
         ticket={selectedTicket}
         onClose={() => setSelectedTicket(null)}
       />
-    </>
+    </div>
   );
 }
