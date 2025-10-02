@@ -46,6 +46,23 @@ export default async function AssetManagementPage({
 }) {
   const supabase = await createClient();
 
+  // Fetches the current user's role for permission handling
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let userRole = "user"; // Default role if not found
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    if (profile) {
+      userRole = profile.role;
+    }
+  }
+
   const currentPage = Number(searchParams?.page) || 1;
   const itemsPerPage = Number(searchParams?.limit) || 10;
   const query = searchParams?.q || "";
@@ -117,6 +134,7 @@ export default async function AssetManagementPage({
       users={users ?? []}
       currentPage={currentPage}
       itemsPerPage={itemsPerPage}
+      userRole={userRole} // Pass the user role to the client
     />
   );
 }

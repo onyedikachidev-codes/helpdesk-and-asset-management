@@ -5,11 +5,11 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { PlusCircle, Filter, CheckCircle, XCircle } from "lucide-react";
+import { PlusCircle, Filter, ShieldCheck, ShieldOff } from "lucide-react";
 import Pagination from "@/components/Pagination";
 import ReusuableTable from "@/components/ReusableTable";
 import { baseClassName } from "@/constants/index";
-import type { Asset, User } from "@/app/dashboard/assets-management/page";
+import type { UserProfile } from "@/app/dashboard/user-management/page";
 import {
   Select,
   SelectContent,
@@ -17,56 +17,52 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AssetDetailsModal, CreateAssetModal } from "./CreateAssetModal";
+import { CreateUserModal, UserDetailsModal } from "./userModals";
 
-type AssetManagementClientProps = {
-  initialAssets: Asset[];
-  totalAssets: number;
-  users: User[];
+type UserManagementClientProps = {
+  initialUsers: UserProfile[];
+  totalUsers: number;
   currentPage: number;
   itemsPerPage: number;
-  userRole: string; // The role of the currently logged-in user
 };
 
 const tableHeaders = [
-  { title: "Asset Tag" },
-  { title: "Type" },
-  { title: "Manufacturer" },
-  { title: "Model" },
-  { title: "Assigned To" },
+  { title: "Full Name" },
+  { title: "Email" },
+  { title: "Job Title" },
+  { title: "Department" },
+  { title: "Role" },
   { title: "Status" },
 ];
 
-const assetTypes = ["All", "Laptop", "Phone", "Monitor", "Other"];
-const assignedStatuses = [
-  { label: "All", value: "all" },
-  { label: "Assigned", value: "yes" },
-  { label: "Unassigned", value: "no" },
+const roleFilters = [
+  { label: "All Roles", value: "all" },
+  { label: "Employee", value: "employee" },
+  { label: "IT Staff", value: "it_staff" },
+  { label: "Admin", value: "admin" },
 ];
 
-export default function AssetManagementClient({
-  initialAssets,
-  totalAssets,
-  users,
+export default function UserManagementClient({
+  initialUsers,
+  totalUsers,
   currentPage,
   itemsPerPage,
-  userRole, // Receive the userRole prop
-}: AssetManagementClientProps) {
+}: UserManagementClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentQuery = searchParams.get("q") || "";
-  const currentType = searchParams.get("type") || "All";
-  const currentAssigned = searchParams.get("assigned") || "all";
+  const currentRole = searchParams.get("role") || "all";
 
-  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  // State to manage modals
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
 
-  const totalPages = Math.ceil(totalAssets / itemsPerPage);
+  const totalPages = Math.ceil(totalUsers / itemsPerPage);
 
   const updateSearchParam = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams);
-    if (value && value !== "All" && value !== "all") {
+    if (value && value !== "all") {
       params.set(key, value);
     } else {
       params.delete(key);
@@ -84,46 +80,30 @@ export default function AssetManagementClient({
   return (
     <>
       <div className="flex items-center justify-between mx-6 pt-6">
-        <h1 className="text-2xl font-bold">Asset Management</h1>
+        <h1 className="text-2xl font-bold">User Management</h1>
         <Button
           onClick={() => setCreateModalOpen(true)}
           className="bg-purple-800 hover:bg-purple-700"
         >
           <PlusCircle className="h-4 w-4 mr-2" />
-          Add New Asset
+          Create New User
         </Button>
       </div>
 
       <div className="flex items-center justify-between mx-6 pt-4">
         <div className="flex items-center gap-4">
           <Select
-            onValueChange={(val) => updateSearchParam("type", val)}
-            value={currentType}
+            onValueChange={(val) => updateSearchParam("role", val)}
+            value={currentRole}
           >
             <SelectTrigger className="w-[180px] bg-white">
               <Filter className="h-4 w-4 mr-2 text-gray-500" />
-              <SelectValue placeholder="Filter by type..." />
+              <SelectValue placeholder="Filter by role..." />
             </SelectTrigger>
             <SelectContent>
-              {assetTypes.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            onValueChange={(val) => updateSearchParam("assigned", val)}
-            value={currentAssigned}
-          >
-            <SelectTrigger className="w-[180px] bg-white">
-              <Filter className="h-4 w-4 mr-2 text-gray-500" />
-              <SelectValue placeholder="Filter by status..." />
-            </SelectTrigger>
-            <SelectContent>
-              {assignedStatuses.map((status) => (
-                <SelectItem key={status.value} value={status.value}>
-                  {status.label}
+              {roleFilters.map((role) => (
+                <SelectItem key={role.value} value={role.value}>
+                  {role.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -131,7 +111,7 @@ export default function AssetManagementClient({
           <form onSubmit={handleSearch} className="flex items-center gap-2">
             <Input
               name="q"
-              placeholder="Search assets..."
+              placeholder="Search by name or email..."
               defaultValue={currentQuery}
               className="border-purple-600"
             />
@@ -146,7 +126,7 @@ export default function AssetManagementClient({
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          totalEntries={totalAssets}
+          totalEntries={totalUsers}
           entriesPerPage={itemsPerPage}
           onNext={() => updateSearchParam("page", String(currentPage + 1))}
           onPrev={() => updateSearchParam("page", String(currentPage - 1))}
@@ -155,39 +135,37 @@ export default function AssetManagementClient({
         />
         <ReusuableTable
           headers={tableHeaders}
-          data={initialAssets}
+          data={initialUsers}
           itemsPerPage={itemsPerPage}
           currentPage={currentPage}
-          totalItems={totalAssets}
-          renderRow={(asset) => (
+          totalItems={totalUsers}
+          renderRow={(user) => (
             <TableRow
-              key={asset.id}
+              key={user.id}
               className="odd:bg-[#f8f8fc] cursor-pointer hover:bg-gray-100"
-              onClick={() => setSelectedAsset(asset)}
+              onClick={() => setSelectedUser(user)}
             >
-              <TableCell className={baseClassName}>{asset.asset_tag}</TableCell>
               <TableCell className={baseClassName}>
-                {asset.asset_type}
+                {user.full_name ?? "N/A"}
+              </TableCell>
+              <TableCell className={baseClassName}>{user.email}</TableCell>
+              <TableCell className={baseClassName}>
+                {user.job_title ?? "N/A"}
               </TableCell>
               <TableCell className={baseClassName}>
-                {asset.manufacturer ?? "N/A"}
+                {user.department ?? "N/A"}
               </TableCell>
               <TableCell className={baseClassName}>
-                {asset.model ?? "N/A"}
+                <span className="capitalize font-medium">{user.role}</span>
               </TableCell>
               <TableCell className={baseClassName}>
-                {asset.current_user?.full_name ?? (
-                  <span className="text-gray-500">Unassigned</span>
-                )}
-              </TableCell>
-              <TableCell className={baseClassName}>
-                {asset.current_user ? (
+                {user.is_active ? (
                   <span className="flex items-center text-green-600">
-                    <CheckCircle className="h-4 w-4 mr-1" /> Assigned
+                    <ShieldCheck className="h-4 w-4 mr-1" /> Active
                   </span>
                 ) : (
                   <span className="flex items-center text-red-600">
-                    <XCircle className="h-4 w-4 mr-1" /> Unassigned
+                    <ShieldOff className="h-4 w-4 mr-1" /> Deactivated
                   </span>
                 )}
               </TableCell>
@@ -196,16 +174,13 @@ export default function AssetManagementClient({
         />
       </div>
 
-      <AssetDetailsModal
-        asset={selectedAsset}
-        users={users}
-        onClose={() => setSelectedAsset(null)}
-        userRole={userRole} // Pass the role to the details modal
-      />
-
-      <CreateAssetModal
+      <CreateUserModal
         isOpen={isCreateModalOpen}
         onClose={() => setCreateModalOpen(false)}
+      />
+      <UserDetailsModal
+        user={selectedUser}
+        onClose={() => setSelectedUser(null)}
       />
     </>
   );

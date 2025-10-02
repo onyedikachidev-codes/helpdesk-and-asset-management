@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { Inbox, UserCheck, BarChart, CheckCircle } from "lucide-react";
 import Link from "next/link";
 
-// A local StatCard component for the IT dashboard's specific style
 function StatCard({
   title,
   value,
@@ -89,7 +88,7 @@ export default async function ITStaffDashboard() {
   return (
     <main className="p-6">
       <h2 className="text-xl font-semibold mb-6">
-        Good morning, <span className="text-purple-800">{firstName}</span>
+        Welcome, <span className="text-purple-800">{firstName}</span>
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard

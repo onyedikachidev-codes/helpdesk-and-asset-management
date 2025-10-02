@@ -1,5 +1,4 @@
-import React from "react";
-
+import React, { ReactNode } from "react"; // 1. Import ReactNode
 import {
   Table,
   TableBody,
@@ -9,7 +8,7 @@ import {
 } from "@/components/ui/table";
 
 interface TableHeaderProps {
-  title: string;
+  title: ReactNode;
   className?: string;
 }
 

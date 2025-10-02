@@ -42,18 +42,14 @@ export default function CreateArticleModal({
   onClose,
   categories,
 }: CreateArticleModalProps) {
-  // 1. Use the modern useActionState hook
   const [state, formAction] = useActionState(createArticle, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // 2. Use useEffect to handle side-effects after the action completes
   useEffect(() => {
-    // If the submission was successful...
     if (state.success) {
-      // Show the success message for 2 seconds, then close the modal
       const timer = setTimeout(() => {
         onClose();
-        formRef.current?.reset(); // Reset the form fields
+        formRef.current?.reset();
       }, 2000);
       return () => clearTimeout(timer);
     }
@@ -69,7 +65,6 @@ export default function CreateArticleModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* The form now calls the formAction from the hook */}
         <form ref={formRef} action={formAction} className="space-y-4 py-4">
           <div>
             <label htmlFor="title" className="font-semibold">
@@ -133,7 +128,6 @@ export default function CreateArticleModal({
           </div>
 
           <DialogFooter>
-            {/* 3. Display error or success messages directly above the buttons */}
             <div className="w-full text-center mr-4">
               {state.error && (
                 <p className="text-red-500 text-sm">{state.error}</p>

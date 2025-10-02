@@ -25,26 +25,32 @@ const menuConfig = [
     icon: LayoutGrid,
     path: `/dashboard`,
     exact: true,
-    roles: ["employee", "it_staff", "admin"], // Visible to everyone
+    roles: ["employee", "it_staff", "admin"],
   },
   {
     name: "My Tickets",
     icon: Ticket,
     path: `/dashboard/tickets`,
-    roles: ["employee"], // Visible to everyone
+    roles: ["employee"],
   },
   {
     name: "My Tickets",
     icon: Ticket,
     path: `/dashboard/tickets/it-staff`,
-    roles: ["it_staff"], // Visible to everyone
+    roles: ["it_staff"],
+  },
+  {
+    name: "My Tickets",
+    icon: Ticket,
+    path: `/dashboard/tickets/admin`,
+    roles: ["admin"],
   },
   {
     name: "My Assets",
     icon: HardDrive,
     path: `/dashboard/assets`,
     exact: true,
-    roles: ["employee", "it_staff"], // Visible to everyone
+    roles: ["employee", "it_staff", "admin"],
   },
   {
     name: "Ticket Queue",
@@ -57,7 +63,7 @@ const menuConfig = [
     name: "Knowledge Base",
     icon: Book,
     path: `/dashboard/knowledge-base`,
-    roles: ["employee", "it_staff", "admin"], // Visible to everyone
+    roles: ["employee", "it_staff", "admin"],
   },
   // IT Staff & Admin Section
 
@@ -80,14 +86,7 @@ const menuConfig = [
   {
     name: "User Management",
     icon: Users,
-    path: "/admin/users",
-    marginClass: "mt-16", // Special margin applied here
-    roles: ["admin"],
-  },
-  {
-    name: "Settings",
-    icon: Settings,
-    path: "/admin/settings",
+    path: "/dashboard/user-management",
     roles: ["admin"],
   },
 
@@ -95,8 +94,7 @@ const menuConfig = [
     name: "My Profile",
     icon: UserCircle,
     path: "/dashboard/profile",
-
-    roles: ["employee", "it_staff"],
+    roles: ["employee", "it_staff", "admin"],
   },
 ];
 

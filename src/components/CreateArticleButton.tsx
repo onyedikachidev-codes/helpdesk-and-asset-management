@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import CreateArticleModal from "./CreateArticleModal";
 
@@ -21,10 +21,14 @@ export default function CreateArticleButton({
 }: CreateArticleButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // FIX: Make the role check case-insensitive by converting the user's role to uppercase.
-  // This will correctly match 'it_staff', 'IT_STAFF', 'It_Staff', etc.
-  if (userRole?.toUpperCase() !== "IT_STAFF") {
-    return null;
+  // FIX: Updated the check to be case-insensitive and to include the 'admin' role.
+  // This will ensure the button is visible to all authorized users.
+  const canCreateArticle =
+    userRole?.toLowerCase() === "it_staff" ||
+    userRole?.toLowerCase() === "admin";
+
+  if (!canCreateArticle) {
+    return null; // Correctly hide the button for unauthorized roles like 'employee'.
   }
 
   return (

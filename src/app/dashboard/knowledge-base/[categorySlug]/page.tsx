@@ -8,23 +8,43 @@ type CategoryPageProps = {
   params: { categorySlug: string };
 };
 
+// --- Type Definitions for robust data handling ---
+type ArticleForCard = {
+  title: string;
+  slug: string;
+  image_url: string | null;
+  excerpt: string | null;
+};
+
+type CategoryWithArticles = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  kb_articles: ArticleForCard[];
+};
+
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const supabase = await createClient();
   const { categorySlug } = params;
 
-  // 2. Updated the query to fetch image_url and excerpt for the cards
+  // The query now expects the specific 'CategoryWithArticles' type
   const { data: category } = await supabase
     .from("kb_categories")
     .select("*, kb_articles(title, slug, image_url, excerpt)")
     .eq("slug", categorySlug)
-    .single();
+    .single<CategoryWithArticles>();
 
   if (!category) {
     notFound();
   }
 
-  // 3. We need to add the category slug to each article so the ArticleCard can build the correct link
-  const articlesWithCategory = category.kb_articles.map((article) => ({
+  // FIX: Safely handle the case where a category might exist but have no articles.
+  // This prevents runtime errors if `kb_articles` is null or undefined.
+  const articles = category.kb_articles || [];
+
+  // Add the category slug to each article so the ArticleCard can build the correct link
+  const articlesWithCategory = articles.map((article) => ({
     ...article,
     category: { slug: category.slug },
   }));
@@ -45,7 +65,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       <h1 className="text-3xl font-bold">{category.name}</h1>
       <p className="text-gray-600 mt-2">{category.description}</p>
 
-      {/* 4. Replaced the old list with a cleaner grid of ArticleCards */}
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {articlesWithCategory.length > 0 ? (
           articlesWithCategory.map((article) => (

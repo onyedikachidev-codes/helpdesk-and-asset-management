@@ -1,38 +1,31 @@
+import TicketQueueClient from "@/components/TicketQueueClient";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import TicketQueueClient from "@/components/TicketQueueClient";
 
-// Force dynamic rendering to ensure the queue is always up-to-date
 export const dynamic = "force-dynamic";
 
 export type QueueTicket = {
   id: number;
   title: string;
+  description: string; // Needed for the edit form
   created_at: string;
   updated_at: string;
   status: string;
-  creator: {
-    full_name: string | null;
-  } | null;
-  assignee: {
-    full_name: string | null;
-  } | null;
+  priority: string; // Needed for the edit form
+  category: string; // Needed for the edit form
+  creator: { full_name: string | null } | null;
+  assignee: { full_name: string | null } | null;
 };
 
-export type ITStaffMember = {
-  id: string;
-  full_name: string | null;
-};
+export type ITStaffMember = { id: string; full_name: string | null };
+// Added types for categories and priorities for the admin edit modal
+export type TicketCategory = { name: string };
+export type TicketPriority = { name: string };
 
 export default async function TicketQueuePage({
   searchParams,
 }: {
-  searchParams?: {
-    page?: string;
-    limit?: string;
-    q?: string;
-    sort?: string;
-  };
+  searchParams?: { page?: string; limit?: string; q?: string; sort?: string };
 }) {
   const supabase = await createClient();
   const {
@@ -43,7 +36,21 @@ export default async function TicketQueuePage({
     redirect("/auth/login");
   }
 
-  // --- 1. Fetch all tickets for the queue view ---
+  // 1. Fetch the user's role to pass down to the client
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  const userRole = profile?.role ?? "employee";
+
+  // 2. Fetch all necessary data in parallel for efficiency
+  const [itStaffListRes, categoriesRes, prioritiesRes] = await Promise.all([
+    supabase.from("profiles").select("id, full_name").ilike("role", "it_staff"),
+    supabase.from("ticket_categories").select("name"),
+    supabase.from("ticket_priorities").select("name"),
+  ]);
+
   const currentPage = Number(searchParams?.page) || 1;
   const itemsPerPage = Number(searchParams?.limit) || 10;
   const query = searchParams?.q || "";
@@ -52,9 +59,10 @@ export default async function TicketQueuePage({
   const from = (currentPage - 1) * itemsPerPage;
   const to = from + itemsPerPage - 1;
 
+  // 3. Fetch extra ticket details needed for the edit form
   let queryBuilder = supabase.from("tickets").select(
     `
-      id, title, status, created_at, updated_at,
+      id, title, description, status, priority, category, created_at, updated_at,
       creator:profiles!tickets_created_by_fkey(full_name),
       assignee:profiles!tickets_assigned_to_fkey(full_name)
     `,
@@ -64,7 +72,6 @@ export default async function TicketQueuePage({
   if (query) {
     queryBuilder = queryBuilder.ilike("title", `%${query}%`);
   }
-
   let sortColumn = "created_at";
   let sortDirection = false;
   if (sort === "oldest") sortDirection = true;
@@ -79,24 +86,15 @@ export default async function TicketQueuePage({
     .range(from, to)
     .returns<QueueTicket[]>();
 
-  // --- 2. Fetch the count of unassigned tickets ---
   const { count: unassignedCount, error: countError } = await supabase
     .from("tickets")
     .select("id", { count: "exact", head: true })
     .is("assigned_to", null);
 
-  // --- 3. Fetch the list of all IT staff members for assignment ---
-  const { data: itStaffList, error: staffError } = await supabase
-    .from("profiles")
-    .select("id, full_name")
-    .eq("role", "IT_STAFF") // This assumes you have a 'role' column
-    .returns<ITStaffMember[]>();
-
-  if (ticketsError || countError || staffError) {
+  if (ticketsError || countError) {
     console.error("Error fetching ticket queue data:", {
       ticketsError,
       countError,
-      staffError,
     });
   }
 
@@ -105,9 +103,12 @@ export default async function TicketQueuePage({
       initialTickets={tickets ?? []}
       totalTickets={count ?? 0}
       unassignedCount={unassignedCount ?? 0}
-      itStaffList={itStaffList ?? []}
+      itStaffList={itStaffListRes.data ?? []}
+      categories={categoriesRes.data ?? []}
+      priorities={prioritiesRes.data ?? []}
       currentPage={currentPage}
       itemsPerPage={itemsPerPage}
+      userRole={userRole}
     />
   );
 }

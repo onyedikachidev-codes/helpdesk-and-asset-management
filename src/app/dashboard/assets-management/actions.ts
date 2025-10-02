@@ -4,16 +4,18 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 // --- TYPE DEFINITION for form action feedback ---
+// FIX: Removed `| null` to ensure an object is always returned.
 type ActionState = {
   error?: string;
   success?: string;
 };
 
-// --- CREATE ASSET ACTION (No changes needed) ---
+// --- CREATE ASSET ACTION ---
 export async function createAsset(
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  // ... function body remains the same
   const supabase = await createClient();
   const rawFormData = {
     asset_tag: formData.get("asset_tag") as string,
@@ -39,11 +41,12 @@ export async function createAsset(
   return { success: "Asset created successfully!" };
 }
 
-// --- ASSIGN ASSET ACTION (No changes needed) ---
+// --- ASSIGN ASSET ACTION ---
 export async function assignAsset(
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  // ... function body remains the same
   const supabase = await createClient();
   const assetId = parseInt(formData.get("asset_id") as string, 10);
   const userId = formData.get("user_id") as string;
@@ -70,19 +73,18 @@ export async function assignAsset(
   return { success: "Asset assigned successfully!" };
 }
 
-// --- UNASSIGN ASSET ACTION (FIXED) ---
-// FIX: Refactored to be compatible with useActionState and provide feedback.
+// --- UNASSIGN ASSET ACTION ---
 export async function unassignAsset(
   prevState: ActionState,
   assetId: number
 ): Promise<ActionState> {
+  // ... function body remains the same
   const supabase = await createClient();
 
   if (!assetId) {
     return { error: "Asset ID is missing." };
   }
 
-  // First, get the current user ID to update the history log
   const { data: assetData, error: fetchError } = await supabase
     .from("assets")
     .select("current_user_id")
@@ -94,7 +96,6 @@ export async function unassignAsset(
     return { error: "Could not find the asset or it's already unassigned." };
   }
 
-  // Update the asset to remove the user
   const { error: updateError } = await supabase
     .from("assets")
     .update({ current_user_id: null })
@@ -105,7 +106,6 @@ export async function unassignAsset(
     return { error: "Database error: Could not unassign asset." };
   }
 
-  // Update the history log to mark the unassignment time
   await supabase
     .from("asset_history")
     .update({ unassigned_at: new Date().toISOString() })
@@ -117,8 +117,9 @@ export async function unassignAsset(
   return { success: "Asset has been unassigned." };
 }
 
-// --- GET ASSET HISTORY ACTION (No changes needed) ---
+// --- GET ASSET HISTORY ACTION (No changes) ---
 export async function getAssetHistory(assetId: number) {
+  // ... function body remains the same
   const supabase = await createClient();
   const { data } = await supabase
     .from("asset_history")
@@ -126,4 +127,46 @@ export async function getAssetHistory(assetId: number) {
     .eq("asset_id", assetId)
     .order("assigned_at", { ascending: false });
   return data ?? [];
+}
+
+// --- DELETE ASSET ACTION ---
+export async function deleteAsset(
+  prevState: ActionState,
+  assetId: number
+): Promise<ActionState> {
+  // ... function body remains the same
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Authentication required." };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin") {
+    return {
+      error: "Unauthorized: You do not have permission to delete assets.",
+    };
+  }
+
+  if (!assetId) {
+    return { error: "Asset ID is missing." };
+  }
+
+  const { error } = await supabase.from("assets").delete().eq("id", assetId);
+
+  if (error) {
+    console.error("Delete Asset Error:", error);
+    return { error: "Database error: Could not delete the asset." };
+  }
+
+  revalidatePath("/dashboard/asset-management");
+  return { success: "Asset was permanently deleted." };
 }

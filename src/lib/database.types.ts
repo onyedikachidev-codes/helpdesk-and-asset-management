@@ -225,6 +225,7 @@ export type Database = {
           department: string | null
           full_name: string | null
           id: string
+          is_active: boolean
           job_title: string | null
           office_location: string | null
           phone_number: string | null
@@ -236,6 +237,7 @@ export type Database = {
           department?: string | null
           full_name?: string | null
           id: string
+          is_active?: boolean
           job_title?: string | null
           office_location?: string | null
           phone_number?: string | null
@@ -247,11 +249,36 @@ export type Database = {
           department?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean
           job_title?: string | null
           office_location?: string | null
           phone_number?: string | null
           receive_notifications?: boolean | null
           role?: string
+        }
+        Relationships: []
+      }
+      ticket_categories: {
+        Row: {
+          name: string
+        }
+        Insert: {
+          name: string
+        }
+        Update: {
+          name?: string
+        }
+        Relationships: []
+      }
+      ticket_priorities: {
+        Row: {
+          name: string
+        }
+        Insert: {
+          name: string
+        }
+        Update: {
+          name?: string
         }
         Relationships: []
       }
@@ -314,9 +341,50 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      count_filtered_users: {
+        Args: { role_filter: string; search_query: string }
+        Returns: number
+      }
+      get_avg_resolution_time: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_daily_ticket_counts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          count: number
+          day: string
+        }[]
+      }
+      get_my_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_paginated_users: {
+        Args: {
+          page_number: number
+          page_size: number
+          role_filter: string
+          search_query: string
+        }
+        Returns: {
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          role: string
+        }[]
+      }
       get_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_user_role_counts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          count: number
+          role: string
+        }[]
       }
     }
     Enums: {

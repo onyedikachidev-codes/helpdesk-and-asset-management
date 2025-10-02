@@ -27,24 +27,22 @@ export default async function KnowledgeBasePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let userRole: string | null = null;
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-    userRole = profile?.role ?? null;
-  }
+  const [profileRes, categoriesRes, recentArticlesRes] = await Promise.all([
+    user
+      ? supabase.from("profiles").select("role").eq("id", user.id).single()
+      : Promise.resolve({ data: null }),
+    supabase.from("kb_categories").select("*"),
+    supabase
+      .from("kb_articles")
+      .select("title, slug, image_url, excerpt, category:kb_categories(slug)")
+      .order("created_at", { ascending: false })
+      .limit(3)
+      .returns<RecentArticle[]>(),
+  ]);
 
-  const { data: categories } = await supabase.from("kb_categories").select("*");
-
-  const { data: recentArticles } = await supabase
-    .from("kb_articles")
-    .select("title, slug, image_url, excerpt, category:kb_categories(slug)")
-    .order("created_at", { ascending: false })
-    .limit(3)
-    .returns<RecentArticle[]>();
+  const userRole = profileRes.data?.role ?? null;
+  const categories = categoriesRes.data;
+  const recentArticles = recentArticlesRes.data;
 
   return (
     <main className="p-6">

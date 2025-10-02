@@ -23,8 +23,6 @@ export default async function MyAssetsPage() {
     redirect("/auth/login");
   }
 
-  // FIX 1: Fetch the user's role from the 'profiles' table.
-  // This is needed by the AssetCard to determine which button to show.
   let userRole: string | null = null;
   if (user) {
     const { data: profile } = await supabase
